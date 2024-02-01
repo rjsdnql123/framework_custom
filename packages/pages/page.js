@@ -14,29 +14,18 @@ export default class App extends Component {
   }
 
   plus() {
-    console.log(this.state, 'plus ststa')
-    // this.setState({
-      // count: 
       this.state.count += 1
-    // });
   }
 
   minus() {
-    // this.setState({
-      // count: 
       this.state.count -= 1
-    // });
   }
 
   handleInputChange(event) {
-    // this.setState({
-      // name: 
       this.state.name = event.target.value
-    // })
   }
 
   jsxRender() {
-    console.log(this.state, 'ststaststaststaststaststaststaststaststaststa')
     return `
       <div>
         <div>

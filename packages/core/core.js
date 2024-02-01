@@ -114,10 +114,7 @@ export default class Component {
    * 그렇지 않으면 데이터가 입력되지 않음
    */
   useState(newState) {
-    for (let key in newState) {
-      console.log("run2");
       Reflect.set(this, "state", newState);
-    }
   }
 
   #_convertHtmltoJsx(type, props, ...children) {
