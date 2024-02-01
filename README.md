@@ -63,3 +63,103 @@ html을 String으로 작성 하면서 상태, 변수, 함수 등이 사용 되�
 
 
 ... 추가 중..
+
+
+.. 두서 없는 고민..
+프레임워크들으 각 상태를 immutable || mutalble 하게 관리하고 있다.
+
+현 프로젝트에서 mutable한 상태를 관리 하게 된 이유는 불필요한 메모리를 소비 하지 않기 위해 mutable한 상태를 관리하고 좀더 직관적인 상태 변화를 보고 싶어서 였으나,
+
+개발 하면서 느낀점은 ```state``` 하나가 변하면 모든 화면은 다시 그려지고 있음.
+
+jsx를 사용한들 이 문제점은 해결 되지 않음
+
+다시 immutable한 상태를 관리 하기 위해 React의 내부 구현을 참고 함
+
+1. useState 사용 시
+
+```ts
+// https://github.com/facebook/react/blob/d29f7d973da616a02d6240ea10306a6f33e35ca1/packages/react/src/ReactHooks.js#L23
+export function useState<S>(
+  initialState: (() => S) | S,
+): [S, Dispatch<BasicStateAction<S>>] {
+  const dispatcher = resolveDispatcher();
+  return dispatcher.useState(initialState);
+}
+```
+
+
+dispatcher.useState
+
+```ts
+// https://github.com/facebook/react/blob/d29f7d973da616a02d6240ea10306a6f33e35ca1/packages/react-reconciler/src/ReactFiberHooks.js#L1767-L1779
+function mountState<S>(
+  initialState: (() => S) | S,
+): [S, Dispatch<BasicStateAction<S>>] {
+
+  * const hook = mountStateImpl(initialState);  // React fiber 의 scheduling 관련 로직들이 담겨 있음
+  const queue = hook.queue;
+  const dispatch: Dispatch<BasicStateAction<S>> = (dispatchSetState.bind(  // 외부로 노출되는 함수로 bind로 각 함수들이 묶여 있음
+    null,
+    currentlyRenderingFiber,
+    queue,
+  ): any);
+  queue.dispatch = dispatch;
+  return [hook.memoizedState, dispatch];   // 우리가 만나게 되는 const [state, setState] = useState
+}
+```
+
+
+```* hook```을 따라가게 되면 만나는 함수
+
+참고 해야 할 부분
+- workInProgressHook는 전역 변수로 스케쥴링을 담당하고 있음.
+- linked list 형태로 현 queue가 null 이라면 ```currentlyRenderingFiber.memoizedState = workInProgressHook = hook;``` workInProgressHook를 header로 잡고
+- ```workInProgressHook = workInProgressHook.next = hook``` next로 이어서 사용한다.
+- 화면을 그려주는 부분까지 보진 못했지만, linked list로 상태를 순차적으로 업데이트 하고 화면에는 한번에 반영하는 방법으로 수정 하여야 겠다
+
+```ts
+// mountStateImpl-  https://github.com/facebook/react/blob/d29f7d973da616a02d6240ea10306a6f33e35ca1/packages/react-reconciler/src/ReactFiberHooks.js#L1749C1-L1765C2
+// mountWorkInProgressHook - https://github.com/facebook/react/blob/d29f7d973da616a02d6240ea10306a6f33e35ca1/packages/react-reconciler/src/ReactFiberHooks.js#L927-L946
+
+function mountStateImpl<S>(initialState: (() => S) | S): Hook {
+  * const hook = mountWorkInProgressHook();
+  if (typeof initialState === 'function') {
+    // $FlowFixMe[incompatible-use]: Flow doesn't like mixed types
+    initialState = initialState();
+  }
+  hook.memoizedState = hook.baseState = initialState;
+  const queue: UpdateQueue<S, BasicStateAction<S>> = {
+    pending: null,
+    lanes: NoLanes,
+    dispatch: null,
+    lastRenderedReducer: basicStateReducer,
+    lastRenderedState: (initialState: any),
+  };
+  hook.queue = queue;
+  return hook;
+}
+
+
+function mountWorkInProgressHook(): Hook {
+  const hook: Hook = {
+    memoizedState: null,
+
+    baseState: null,
+    baseQueue: null,
+    queue: null,
+
+    next: null,
+  };
+
+  if (workInProgressHook === null) {
+    // This is the first hook in the list
+    currentlyRenderingFiber.memoizedState = workInProgressHook = hook;
+  } else {
+    // Append to the end of the list
+    workInProgressHook = workInProgressHook.next = hook;
+  }
+  return workInProgressHook;
+}
+
+```
