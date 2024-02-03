@@ -29,7 +29,6 @@ export default class NComponent {
         return Reflect.get(target, prop, receiver);
       },
       set(target, prop, value, receiver) {
-        console.log(target, prop, value, 'adsfklasdjfklsajfklasjflk')
         if (Reflect.set(target, prop, value, receiver)) {
           // component did mount(첫 렌더링) 전에 #_rerender를 할 필요가 없음
           // 성능을 고려 해 한번만 렌더링 되면 됨
@@ -74,13 +73,11 @@ export default class NComponent {
 
   // private
   #_renderChildComponent(elements) {
-    console.log(elements, 'elements')
     if (this.$components) {
       Object.keys(this.$components).forEach((key) => {
         const findComponent = elements.children.find(
           (element) => element.type === key
         );
-        console.log(findComponent.props, 'findComponent.props')
         const $selector = document.querySelector(`${key}`);
         new this.$components[key]($selector, {
           ...this.#_utilsPropsPick(findComponent.props)
@@ -93,9 +90,7 @@ export default class NComponent {
     let temp = {};
 
     Object.keys(findComponentProps).forEach((key) => {
-      console.log(findComponentProps, 'findComponentProps', key)
       const convertPropsStr = findComponentProps[key].replace(/this\./, "");
-      console.log(convertPropsStr, 'getPropertygetProperty')
       const getProperty = new Function("obj", `return obj.${convertPropsStr};`);
       const value = getProperty(this);
 
