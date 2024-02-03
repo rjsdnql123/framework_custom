@@ -1,4 +1,4 @@
-export default class Component {
+export default class NComponent {
   $target;
   props;
   state = {};
@@ -20,7 +20,7 @@ export default class Component {
       }
     });
 
-    this.setup();
+    this.init();
 
     const rootThis = this;
 
@@ -45,7 +45,7 @@ export default class Component {
     this.componentDidMount()
   }
 
-  setup() {}
+  init() {}
 
   jsxRender() {
     return "";
@@ -113,6 +113,14 @@ export default class Component {
    * 첫 State 할당은 useState를 통해 해주어야 함.
    * 그렇지 않으면 데이터가 입력되지 않음
    */
+  
+  /**
+   * this.state = {}
+   * this.setState({
+   * ...{}, a : b
+   * }) 
+   */
+    
   useState(newState) {
       Reflect.set(this, "state", newState);
   }
@@ -126,10 +134,12 @@ export default class Component {
   }
 
   #_createElementFromHTML(html) {
+    console.log(html, 'html')
     let enter = html.replace(/\n/g, "");
-
+    console.log(enter, 'enter')
     const parser = new DOMParser();
     const doc = parser.parseFromString(enter, "text/html");
+    console.log(doc, 'parser')
 
     function traverse(element) {
       const type = element.tagName.toLowerCase();
@@ -145,7 +155,9 @@ export default class Component {
 
       for (const childNode of element.childNodes) {
         if (childNode.nodeType === Node.TEXT_NODE) {
-          children.push(childNode.textContent.trim());
+          children.push(childNode.textContent
+          // .trim()
+          );
         } else if (childNode.nodeType === Node.ELEMENT_NODE) {
           children.push(traverse.call(this, childNode));
         }
@@ -169,7 +181,7 @@ export default class Component {
     const { type, props, children } = element;
     // element 추가 로직
     const el = document.createElement(type);
-
+    console.log(props, 'props')
     for (let key in props) {
       if (key.startsWith("on")) {
 
@@ -182,6 +194,7 @@ export default class Component {
 
         const value = getProperty(this);
 
+        // onClick -> click
         let eventType = key.substring(2).toLowerCase();
 
         // input onchange 는 별도로 처리해서 실시간 반영 되도록 처리 하고 싶음

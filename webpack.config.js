@@ -10,11 +10,22 @@ module.exports = {
     path: path.resolve(__dirname, 'dist')
   },
   plugins: [
-    
     new HtmlWebpackPlugin({
       template: "./index.html",
     }),
   ],
+  module: {
+    rules: [
+      {
+        test: /\.s[ac]ss$/i,
+        use: [
+          "style-loader",
+          "css-loader",
+          "sass-loader",
+        ],
+      },
+    ],
+  },
   devServer: {
     historyApiFallback: true,
     port: 3000,

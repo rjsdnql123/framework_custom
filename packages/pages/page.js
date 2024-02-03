@@ -1,44 +1,42 @@
-import InputCompontnt from "../component/inputComponent.js";
-import Component from "../core/core.js";
+import NComponent from "../core/core.js";
+import "./app.scss";
 
-export default class App extends Component {
-  setup() {
-    this.$components = {
-      'input-component': InputCompontnt
-    };
-
-      this.useState({
-        count: 0,
-        name: '입력 해주세요'
-      })
+export default class App extends NComponent {
+  init() {
+    this.useState({
+      count: 0,
+      text: ""
+    });
   }
 
-  plus() {
-      this.state.count += 1
+  increment() {
+    this.state.count += 1;
   }
 
-  minus() {
-      this.state.count -= 1
+  decrement() {
+    this.state.count -= 1;
   }
 
   handleInputChange(event) {
-      this.state.name = event.target.value
+    this.state.text = event.target.value;
   }
 
   jsxRender() {
     return `
-      <div>
-        <div>
-          <span>이름 - </span>
-          <span>${this.state.name}</span>
+      <div id="root">
+          <div class="textbox">
+            <label for="custom_imput"></label>
+            <input type="text" id="custom_imput" onChange="handleInputChange" />
+          </div>
+
+        <span class="text-area">${this.state.text}</span>
+        <div class="count">count = ${this.state.count}</div>
+
+        <div class="button-list">
+          <button onClick="increment">Button</button>
+          <button onClick="decrement" class="decrement dark">Decrement</button>
         </div>
-        <div>
-          count -> ${this.state.count}
-        </div>
-        <button onClick="plus"> + </button>
-        <button onClick="minus"> - </button>
-        <input-component handle-input-change="this.handleInputChange" name="this.state.name"></input-component>
       </div>
-        `;
+      `;
   }
 }
