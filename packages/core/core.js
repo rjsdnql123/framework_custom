@@ -45,7 +45,9 @@ export default class NComponent {
           //   }
           //   console.log(isRenderPhase, 'isRenderPhase')
           //   return true
-            rootThis.#_rerender();
+          // console.log()
+          // rootThis.setState()
+          // rootThis.#_rerender();
           // }
           return true;
         }
@@ -55,10 +57,6 @@ export default class NComponent {
     });
     this.#render();
     this.componentDidMount()
-  }
-
-  setState(value) {
-    // call back 
   }
 
   init() {}
@@ -179,12 +177,28 @@ export default class NComponent {
     }
     return traverse.call(this, doc.body.firstChild);
   }
-  bach = false
+  // batch 업데이트를 위한 값
+  batch = false
   bachUpdate(callback) {
-    bach = true
+    this.batch = true
     callback()
-    bach = false
+    this.batch = false
+    this.#_rerender();
     // 상태 변화에 따른 렌더링은 여기서 시켜주기
+  }
+
+  // setState를 통해 상태를 업데이트 해줌
+  setState() {
+
+    // 이벤트 액션 작동 중 setState가 있으면? 
+    // batch 가 true, false를 판단한다.
+
+    // batch 가 true면 추 후에 업데이트 시켜 줄 것이기 때문에
+    // pending state에 담아 잠시 보관
+
+    // batch 가 false면 완료 된것 으로 판단 하고 바로 업데이트 시켜준다.
+
+
   }
 
   #_renderElement(element, container) {
