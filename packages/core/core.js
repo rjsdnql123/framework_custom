@@ -1,3 +1,5 @@
+let isRenderPhase = false;
+
 export default class NComponent {
   $target;
   props;
@@ -29,12 +31,22 @@ export default class NComponent {
         return Reflect.get(target, prop, receiver);
       },
       set(target, prop, value, receiver) {
+        isRenderPhase = true;
         if (Reflect.set(target, prop, value, receiver)) {
           // component did mount(첫 렌더링) 전에 #_rerender를 할 필요가 없음
           // 성능을 고려 해 한번만 렌더링 되면 됨
-          if (rootThis.#isComponentdidMount) {
+          // if (rootThis.#isComponentdidMount) {
+          //   // 스케쥴 등록
+          //   schedulerHook(value);
+          //   if(isRenderPhase) {
+          //     // 안돼
+          //     console.log('laksdjflkasjflkjsadkflajsklfjasklf')
+          //     return false;
+          //   }
+          //   console.log(isRenderPhase, 'isRenderPhase')
+          //   return true
             rootThis.#_rerender();
-          }
+          // }
           return true;
         }
         // error
@@ -43,6 +55,10 @@ export default class NComponent {
     });
     this.#render();
     this.componentDidMount()
+  }
+
+  setState(value) {
+    // call back 
   }
 
   init() {}
@@ -134,12 +150,9 @@ export default class NComponent {
   }
 
   #_createElementFromHTML(html) {
-    console.log(html, 'html')
     let enter = html.replace(/\n/g, "");
-    console.log(enter, 'enter')
     const parser = new DOMParser();
     const doc = parser.parseFromString(enter, "text/html");
-    console.log(doc, 'parser')
 
     function traverse(element) {
       const type = element.tagName.toLowerCase();
@@ -166,6 +179,13 @@ export default class NComponent {
     }
     return traverse.call(this, doc.body.firstChild);
   }
+  bach = false
+  bachUpdate(callback) {
+    bach = true
+    callback()
+    bach = false
+    // 상태 변화에 따른 렌더링은 여기서 시켜주기
+  }
 
   #_renderElement(element, container) {
     // 문자열 이면 바로 화면에 뿌려줌
@@ -181,7 +201,6 @@ export default class NComponent {
     const { type, props, children } = element;
     // element 추가 로직
     const el = document.createElement(type);
-    console.log(props, 'props')
     for (let key in props) {
       if (key.startsWith("on")) {
 
@@ -203,10 +222,12 @@ export default class NComponent {
         //   // input type 이면
         //   eventType = 'input'
         // }
-
+          // console.log(value, 'value')
         const componentFunction = value;
 
-        el.addEventListener(eventType, componentFunction.bind(this));
+        el.addEventListener(eventType, (event) => {
+          this.bachUpdate(componentFunction.bind(this, event))
+        });
       } else if (
         key === "classname" ||
         key === "id" ||
@@ -241,4 +262,24 @@ export default class NComponent {
     }
     container.appendChild(el);
   }
+}
+
+
+let scheduler = [];
+
+function schedulerHook(value) {
+  console.log(isRenderPhase, 'isRenderPhaseisRenderPhaseisRenderPhase')
+  scheduler.push(value)
+    // 여기서 스케쥴 등록
+
+    // 등록 했다 치기
+
+    //스케쥴 등록 끝
+
+    if(scheduler.length) {
+      // 1이상이면
+      // render
+      
+    }
+    isRenderPhase = false;
 }

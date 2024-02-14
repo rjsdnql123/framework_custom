@@ -11,6 +11,7 @@ export default class App extends NComponent {
 
   increment() {
     this.state.count += 1;
+    this.state.text = '리-렌더'
   }
 
   decrement() {
