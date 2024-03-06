@@ -1,4 +1,4 @@
-let isRenderPhase = false;
+
 
 export default class NComponent {
   $target;
@@ -6,6 +6,7 @@ export default class NComponent {
   state = {};
   $components = {};
   #isComponentdidMount = false;
+  batch = false
 
   constructor($target, props) {
     this.$target = $target;
@@ -31,24 +32,7 @@ export default class NComponent {
         return Reflect.get(target, prop, receiver);
       },
       set(target, prop, value, receiver) {
-        isRenderPhase = true;
         if (Reflect.set(target, prop, value, receiver)) {
-          // component did mount(첫 렌더링) 전에 #_rerender를 할 필요가 없음
-          // 성능을 고려 해 한번만 렌더링 되면 됨
-          // if (rootThis.#isComponentdidMount) {
-          //   // 스케쥴 등록
-          //   schedulerHook(value);
-          //   if(isRenderPhase) {
-          //     // 안돼
-          //     console.log('laksdjflkasjflkjsadkflajsklfjasklf')
-          //     return false;
-          //   }
-          //   console.log(isRenderPhase, 'isRenderPhase')
-          //   return true
-          // console.log()
-          // rootThis.setState()
-          // rootThis.#_rerender();
-          // }
           return true;
         }
         // error
@@ -121,19 +105,6 @@ export default class NComponent {
     return temp;
   }
 
-  /**
-   * 
-   * React, Qwik의 상태 관리 방법을 보며 벤치마킹.
-   * 첫 State 할당은 useState를 통해 해주어야 함.
-   * 그렇지 않으면 데이터가 입력되지 않음
-   */
-  
-  /**
-   * this.state = {}
-   * this.setState({
-   * ...{}, a : b
-   * }) 
-   */
     
   useState(newState) {
       Reflect.set(this, "state", newState);
@@ -177,18 +148,33 @@ export default class NComponent {
     }
     return traverse.call(this, doc.body.firstChild);
   }
-  // batch 업데이트를 위한 값
-  batch = false
-  bachUpdate(callback) {
-    this.batch = true
-    callback()
-    this.batch = false
-    this.#_rerender();
-    // 상태 변화에 따른 렌더링은 여기서 시켜주기
-  }
 
-  // setState를 통해 상태를 업데이트 해줌
-  setState() {
+  setState(value) {
+    if(this.batchUpdate) {
+      // 현재 상태 변화 중
+      this.pendingState = {
+        ...this.pendingState,
+        value
+      }
+    } else {
+      // 상태 할당
+      this.batchUpdate = true;
+      
+      this.pendingState = {
+        ...this.pendingState,
+        value
+      }
+
+      if (!this.animationFrameId) {
+        this.animationFrameId = requestIdleCallback(() => {
+          this.state = {...this.pendingState.value}
+          this.#_rerender();
+          this.batchUpdate = false;
+          this.animationFrameId = null;
+        });
+      }
+      // this.state = this.pendingState;
+    }
 
     // 이벤트 액션 작동 중 setState가 있으면? 
     // batch 가 true, false를 판단한다.
@@ -230,18 +216,9 @@ export default class NComponent {
         // onClick -> click
         let eventType = key.substring(2).toLowerCase();
 
-        // input onchange 는 별도로 처리해서 실시간 반영 되도록 처리 하고 싶음
-        // 화면이 다시 그려질 때를 대비하지 못함
-        // if(type === 'input') {
-        //   // input type 이면
-        //   eventType = 'input'
-        // }
-          // console.log(value, 'value')
         const componentFunction = value;
+        el.addEventListener(eventType, componentFunction.bind(this))
 
-        el.addEventListener(eventType, (event) => {
-          this.bachUpdate(componentFunction.bind(this, event))
-        });
       } else if (
         key === "classname" ||
         key === "id" ||
@@ -278,22 +255,3 @@ export default class NComponent {
   }
 }
 
-
-let scheduler = [];
-
-function schedulerHook(value) {
-  console.log(isRenderPhase, 'isRenderPhaseisRenderPhaseisRenderPhase')
-  scheduler.push(value)
-    // 여기서 스케쥴 등록
-
-    // 등록 했다 치기
-
-    //스케쥴 등록 끝
-
-    if(scheduler.length) {
-      // 1이상이면
-      // render
-      
-    }
-    isRenderPhase = false;
-}

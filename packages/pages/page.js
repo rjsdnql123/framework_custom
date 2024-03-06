@@ -10,8 +10,15 @@ export default class App extends NComponent {
   }
 
   increment() {
-    this.state.count += 1;
-    this.state.text = '리-렌더'
+    this.setState({
+      ...this.state, 
+      count: this.state.count += 1
+    })
+    this.setState({
+      ...this.state, 
+      text: '리-렌더'
+    })
+
   }
 
   decrement() {
@@ -23,6 +30,7 @@ export default class App extends NComponent {
   }
 
   jsxRender() {
+    console.log('render', this.state)
     return `
       <div id="root">
           <div class="textbox">
