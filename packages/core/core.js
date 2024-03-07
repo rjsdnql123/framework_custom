@@ -27,18 +27,7 @@ export default class NComponent {
 
     const rootThis = this;
 
-    this.state = new Proxy(this.state, {
-      get(target, prop, receiver) {
-        return Reflect.get(target, prop, receiver);
-      },
-      set(target, prop, value, receiver) {
-        if (Reflect.set(target, prop, value, receiver)) {
-          return true;
-        }
-        // error
-        return false;
-      }
-    });
+    // this.state = {};
     this.#render();
     this.componentDidMount()
   }
@@ -150,40 +139,23 @@ export default class NComponent {
   }
 
   setState(value) {
-    if(this.batchUpdate) {
-      // 현재 상태 변화 중
-      this.pendingState = {
-        ...this.pendingState,
-        value
-      }
-    } else {
-      // 상태 할당
+    if(!this.batchUpdate) {
       this.batchUpdate = true;
-      
-      this.pendingState = {
-        ...this.pendingState,
-        value
-      }
-
+      this.pendingState = this.state
+     
       if (!this.animationFrameId) {
         this.animationFrameId = requestIdleCallback(() => {
-          this.state = {...this.pendingState.value}
+          this.state = this.pendingState
           this.#_rerender();
           this.batchUpdate = false;
           this.animationFrameId = null;
         });
       }
-      // this.state = this.pendingState;
+    } 
+    this.pendingState = {
+      ...this.pendingState,
+      ...value
     }
-
-    // 이벤트 액션 작동 중 setState가 있으면? 
-    // batch 가 true, false를 판단한다.
-
-    // batch 가 true면 추 후에 업데이트 시켜 줄 것이기 때문에
-    // pending state에 담아 잠시 보관
-
-    // batch 가 false면 완료 된것 으로 판단 하고 바로 업데이트 시켜준다.
-
 
   }
 

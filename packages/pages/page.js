@@ -11,18 +11,17 @@ export default class App extends NComponent {
 
   increment() {
     this.setState({
-      ...this.state, 
-      count: this.state.count += 1
+      count: this.state.count + 1
     })
     this.setState({
-      ...this.state, 
       text: '리-렌더'
     })
-
   }
 
   decrement() {
-    this.state.count -= 1;
+    this.setState({
+      count: this.state.count - 1
+    })
   }
 
   handleInputChange(event) {
@@ -30,7 +29,7 @@ export default class App extends NComponent {
   }
 
   jsxRender() {
-    console.log('render', this.state)
+    console.log('리-렌더링', this.state)
     return `
       <div id="root">
           <div class="textbox">
